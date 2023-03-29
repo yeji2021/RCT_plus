@@ -68,7 +68,6 @@ def save_img(output, save_dir, name):
     #denormalize
     output = (output+1)*127.5
 
-    #rgb2bgr
     output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
     cv2.imwrite(save_dir + name ,output)
     print(save_dir + name)
@@ -106,7 +105,6 @@ def evaluate(loader, model,):
         ssim += structural_similarity(outputs, targets).item()
         alex += loss_fn_alex(outputs, targets).item()
 
-        
         s_ssim += cal_sk_ssim(targets, outputs)
         # print(f' ssim {structural_similarity(outputs, targets).item():.4f}, nu_ssim {cal_ssim(outputs, targets, as_loss = False).item():.4f}')
 
