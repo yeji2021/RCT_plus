@@ -106,8 +106,7 @@ def main(args):
  # custom loop
     for epoch in range(start_epoch, args.epochs):
         # train
-        train_summary = train_one_epoch(train_loader, model, criterion, optimizer, scheduler, vgg, epoch)
-        import pdb; pdb.set_trace()
+        train_summary = train_one_epoch(train_loader, model, criterion, optimizer, scheduler, epoch)
 
         # test
         test_summary = evaluate(test_loader, model)
@@ -152,14 +151,13 @@ def main(args):
                 f.writelines(log)
 
 
-def train_one_epoch(loader, model, criterion, optimizer, scheduler, vgg, epoch):
+def train_one_epoch(loader, model, criterion, optimizer, scheduler, epoch):
 
-    vgg.eval()
     model.train()
 
     epoch_psnr = AverageMeter()
     epoch_ssim = AverageMeter()
-    epoch_vgg = AverageMeter()
+    epoch_alex = AverageMeter()
 
 
     for i, (inputs, targets) in enumerate(loader):
@@ -190,13 +188,13 @@ def train_one_epoch(loader, model, criterion, optimizer, scheduler, vgg, epoch):
         batch_size = inputs[0].size(0)
         psnr = peak_signal_noise_ratio(Y, targets)
         ssim = structural_similarity(Y, targets)
-        l_vgg = perceptual_similarity(lpips_vgg, Y, targets)
+        l_alex = perceptual_similarity(lpips_alex, Y, targets)
 
         epoch_psnr.update(psnr.detach().cpu().numpy(), batch_size)
         epoch_ssim.update(ssim.detach().cpu().numpy(), batch_size)
-        epoch_vgg.update(l_vgg.detach().cpu().numpy(), batch_size)
+        epoch_alex.update(l_alex.detach().cpu().numpy(), batch_size)
 
-    return (epoch_psnr.avg, epoch_ssim.avg, epoch_vgg.avg)
+    return (epoch_psnr.avg, epoch_ssim.avg, epoch_alex.avg)
 
 
 def evaluate(loader, model):
@@ -205,7 +203,7 @@ def evaluate(loader, model):
 
     epoch_psnr = AverageMeter()
     epoch_ssim = AverageMeter()
-    epoch_vgg = AverageMeter()
+    epoch_alex = AverageMeter()
 
     for inputs, targets in loader: 
         # cpu -> gpu
@@ -220,18 +218,18 @@ def evaluate(loader, model):
         batch_size = inputs[0].size(0)
         psnr = peak_signal_noise_ratio(Y, targets)
         ssim = structural_similarity(Y, targets)
-        l_vgg = perceptual_similarity(lpips_vgg, Y, targets)
+        l_alex = perceptual_similarity(lpips_alex, Y, targets)
 
         epoch_psnr.update(psnr.detach().cpu().numpy(), batch_size)
         epoch_ssim.update(ssim.detach().cpu().numpy(), batch_size)
-        epoch_vgg.update(l_vgg.detach().cpu().numpy(), batch_size)
+        epoch_alex.update(l_alex.detach().cpu().numpy(), batch_size)
     
-    return (epoch_psnr.avg, epoch_ssim.avg, epoch_vgg.avg)
+    return (epoch_psnr.avg, epoch_ssim.avg, epoch_alex.avg)
 
 
 if __name__=="__main__":
     args = parser.parse_args()
-    lpips_vgg = lpips.LPIPS(net='alex').to(args.device)
+    lpips_alex = lpips.LPIPS(net='alex').to(args.device)
     if args.write :
         writer = SummaryWriter('runs/'+ args.title)
     main(args)
